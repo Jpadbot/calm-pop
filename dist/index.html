@@ -3,15 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#e4f1ef">
+<meta name="theme-color" content="#0e1a28">
 <title>泡泡點破</title>
 <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7">
 <style>
   :root {
-    color-scheme: light;
-    --ink: #1a4d5c;
-    --muted: #3e6572;
-    --card: rgba(255, 255, 255, 0.78);
+    color-scheme: dark;
+    --bg: #0e1a28;
+    --ink: #f3f7fb;
+    --muted: #d5e2ec;
+    --card: rgba(20, 36, 54, 0.94);
   }
   * { box-sizing: border-box; }
   html, body {
@@ -27,11 +28,7 @@
     overflow: hidden;
     font-family: "PingFang TC", "Noto Sans CJK TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
     color: var(--ink);
-    background:
-      radial-gradient(900px 520px at 8% -10%, rgba(186, 220, 232, 0.95), transparent 60%),
-      radial-gradient(720px 480px at 110% 8%, rgba(214, 204, 236, 0.85), transparent 55%),
-      radial-gradient(840px 520px at 50% 115%, rgba(190, 224, 206, 0.9), transparent 52%),
-      #e4f1ef;
+    background: var(--bg);
     user-select: none;
     -webkit-user-select: none;
     touch-action: manipulation;
@@ -44,16 +41,7 @@
     overflow: hidden;
     touch-action: manipulation;
   }
-  .orb {
-    position: absolute;
-    border-radius: 50%;
-    pointer-events: none;
-    filter: blur(2px);
-    opacity: 0.55;
-  }
-  .o1 { width: 180px; height: 180px; left: -40px; top: 18%; background: rgba(150, 198, 214, 0.45); }
-  .o2 { width: 140px; height: 140px; right: -30px; top: 8%; background: rgba(196, 184, 224, 0.42); }
-  .o3 { width: 200px; height: 200px; left: 20%; bottom: -50px; background: rgba(160, 210, 186, 0.4); }
+  .orb { display: none; }
   #cv {
     position: absolute;
     inset: 0;
@@ -75,14 +63,14 @@
     height: 8px;
     margin: 10px 14px 0;
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.62);
+    background: rgba(255, 255, 255, 0.2);
     overflow: hidden;
   }
   #fill {
     height: 100%;
     width: 100%;
     transform-origin: left center;
-    background: linear-gradient(90deg, #8ec8c2, #a9b6e4);
+    background: linear-gradient(90deg, #3ddcff, #c49bff);
     border-radius: inherit;
   }
   #meta {
@@ -108,7 +96,7 @@
     line-height: 0.85;
     letter-spacing: -0.04em;
     font-variant-numeric: tabular-nums;
-    color: rgba(70, 116, 132, 0.28);
+    color: rgba(255, 255, 255, 0.55);
   }
   #areaBtn {
     position: absolute;
@@ -120,16 +108,16 @@
     min-height: 52px;
     padding: 12px 18px;
     border-radius: 999px;
-    border: 1px solid rgba(255, 255, 255, 0.95);
-    background: rgba(255, 255, 255, 0.94);
-    color: var(--ink);
+    border: 1px solid #ffffff;
+    background: #f4f8fb;
+    color: #0e1a28;
     font: 600 18px/1.2 "PingFang TC", "Noto Sans CJK TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
-    box-shadow: 0 8px 24px rgba(70, 110, 130, 0.16);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
     touch-action: manipulation;
   }
   #areaBtn[data-tier="2"] {
-    background: rgba(236, 230, 250, 0.96);
-    color: #4c3d72;
+    background: #e6dcff;
+    color: #1c1233;
   }
   #areaBtn:active { transform: translateX(-50%) scale(0.98); }
   #flash {
@@ -142,7 +130,7 @@
     pointer-events: none;
     font-size: 28px;
     font-weight: 600;
-    color: rgba(26, 77, 92, 0.8);
+    color: rgba(255, 255, 255, 0.95);
   }
   .panel {
     position: absolute;
@@ -157,7 +145,7 @@
       calc(18px + env(safe-area-inset-top))
       22px
       calc(22px + env(safe-area-inset-bottom));
-    background: rgba(228, 241, 239, 0.42);
+    background: rgba(8, 16, 28, 0.72);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
     overflow: auto;
@@ -170,7 +158,7 @@
     background: var(--card);
     border-radius: 28px;
     padding: 28px 22px;
-    box-shadow: 0 10px 36px rgba(70, 110, 130, 0.1);
+    box-shadow: 0 10px 36px rgba(0, 0, 0, 0.35);
   }
   h1, .headline {
     margin: 0;
@@ -204,20 +192,20 @@
     cursor: pointer;
   }
   button:focus-visible {
-    outline: 3px solid rgba(70, 140, 160, 0.9);
+    outline: 3px solid #9ad7ff;
     outline-offset: 3px;
   }
   .primary {
-    border: 1px solid rgba(255, 255, 255, 0.95);
-    background: rgba(255, 255, 255, 0.95);
-    color: var(--ink);
-    box-shadow: 0 8px 24px rgba(70, 110, 130, 0.16);
+    border: 1px solid #ffffff;
+    background: #f4f8fb;
+    color: #0e1a28;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
   }
   .primary:active, .ghost:active { transform: scale(0.98); }
   .ghost {
-    border: 1px solid rgba(26, 77, 92, 0.28);
-    background: rgba(255, 255, 255, 0.55);
-    color: var(--ink);
+    border: 1px solid rgba(255, 255, 255, 0.62);
+    background: transparent;
+    color: #f3f7fb;
   }
   .row { display: flex; gap: 10px; }
   .row button { flex: 1; }
@@ -265,14 +253,12 @@
     <div class="copy">
       <p class="headline" id="failTitle">時間到</p>
       <p class="lead" id="failCount">還有 0 個泡泡</p>
-      <p class="sub">未消除的會加倍帶入下一回合</p>
+      <p class="sub" id="failSub">未消除的會加倍帶入下一回合</p>
     </div>
     <div class="actions">
       <button type="button" id="btnContinue" class="primary">繼續</button>
-      <div class="row">
-        <button type="button" id="btnRetry" class="ghost">重試</button>
-        <button type="button" id="btnHome" class="ghost">回開始</button>
-      </div>
+      <button type="button" id="btnRetry" class="primary" hidden>重試</button>
+      <button type="button" id="btnHome" class="ghost">回開始</button>
     </div>
   </section>
 
@@ -298,10 +284,10 @@ var MAX_BUBBLES = 100;
 var TOTAL_ROUNDS = 10;
 var ROUND_MS = 10000;
 var PALETTE = [
-  [120, 186, 214],
-  [126, 196, 168],
-  [186, 170, 222],
-  [116, 198, 198]
+  [61, 220, 255],
+  [61, 222, 138],
+  [196, 155, 255],
+  [91, 140, 255]
 ];
 var DECOR = [
   { px: 0.16, py: 0.2, r: 26, ci: 0, phase: 0.4 },
@@ -311,19 +297,25 @@ var DECOR = [
   { px: 0.68, py: 0.3, r: 12, ci: 0, phase: 4.1 }
 ];
 
-function planRound(round, prevRemaining) {
-  var carry = Math.min(MAX_BUBBLES, Math.max(0, prevRemaining) * 2);
-  var quota = 10 + (round - 1) * 2;
-  var fresh = Math.max(0, Math.min(quota, MAX_BUBBLES - carry));
-  return { carry: carry, fresh: fresh, total: carry + fresh };
+function baseCount(round) {
+  return Math.min(10 * round, MAX_BUBBLES);
 }
 
-function reduceFail(assist, failStreak, roundStartCount, remaining) {
+function planRound(round, prevRemaining) {
+  var base = baseCount(round);
+  var leftover = Math.max(0, prevRemaining || 0);
+  var total = leftover > 0 ? Math.min(leftover * 2 + base, MAX_BUBBLES) : base;
+  return { base: base, leftover: leftover, total: total };
+}
+
+function reduceFail(assist, failStreak, roundStartCount) {
+  if (roundStartCount < MAX_BUBBLES) {
+    return { assist: 0, failStreak: 0 };
+  }
   var streak = failStreak + 1;
-  var facing = roundStartCount >= MAX_BUBBLES || remaining >= MAX_BUBBLES || remaining * 2 >= MAX_BUBBLES;
   var next = assist;
-  if (assist >= 1) next = 2;
-  else if (facing && streak >= 2) next = 1;
+  if (next >= 1) next = 2;
+  else if (streak >= 2) next = 1;
   return { assist: next, failStreak: streak };
 }
 
@@ -357,6 +349,9 @@ var screenStart = document.getElementById('screenStart');
 var screenFail = document.getElementById('screenFail');
 var screenDone = document.getElementById('screenDone');
 var failCount = document.getElementById('failCount');
+var failSub = document.getElementById('failSub');
+var btnContinue = document.getElementById('btnContinue');
+var btnRetry = document.getElementById('btnRetry');
 var doneLine = document.getElementById('doneLine');
 var doneSub = document.getElementById('doneSub');
 var btnRetryDone = document.getElementById('btnRetryDone');
@@ -372,6 +367,7 @@ var S = {
   rings: [],
   failStreak: 0,
   assist: 0,
+  failAdvance: false,
   roundStartCount: 0,
   popped: 0,
   endedWith: 0,
@@ -491,7 +487,7 @@ function makeBubbles(n) {
         y: y,
         r: r,
         rgb: rgb,
-        alpha: 0.46 + Math.random() * 0.16,
+        alpha: 0.96,
         phase: Math.random() * Math.PI * 2,
         freq: 0.85 + Math.random() * 0.7,
         amp: reduceMotion ? 0 : 2 + Math.random() * 2
@@ -582,22 +578,31 @@ function resolveFail() {
     resolveSuccess();
     return;
   }
-  var next = reduceFail(S.assist, S.failStreak, S.roundStartCount, remaining);
+  var next = reduceFail(S.assist, S.failStreak, S.roundStartCount);
   S.assist = next.assist;
   S.failStreak = next.failStreak;
   S.endedWith = remaining;
   S.timeLeft = 0;
-  if (S.round >= TOTAL_ROUNDS) showDone();
-  else showFail();
+  S.failAdvance = S.round < TOTAL_ROUNDS && S.roundStartCount < MAX_BUBBLES;
+  showFail();
 }
 
 function showFail() {
   S.mode = 'fail';
   failCount.textContent = '還有 ' + S.endedWith + ' 個泡泡';
+  if (S.failAdvance) {
+    failSub.textContent = '未消除的會加倍帶入下一回合';
+    btnContinue.hidden = false;
+    btnRetry.hidden = true;
+  } else {
+    failSub.textContent = '再試一次這一回合';
+    btnContinue.hidden = true;
+    btnRetry.hidden = false;
+  }
   flash.hidden = true;
   showOnly('fail');
   syncHud();
-  focusId('btnContinue');
+  focusId(S.failAdvance ? 'btnContinue' : 'btnRetry');
 }
 
 function showDone() {
@@ -648,8 +653,7 @@ function retryRound() {
     return;
   }
   if (S.mode !== 'fail' && S.mode !== 'done') return;
-  S.failStreak = S.snap.failStreak;
-  S.assist = S.snap.assist;
+  if (S.mode === 'fail' && S.failAdvance) return;
   S.popped = S.snap.popped;
   beginRound(S.snap.round, S.snap.prevRemaining);
 }
@@ -769,8 +773,8 @@ function drawBubble(b, now) {
   ctx.arc(x, y, r, 0, Math.PI * 2);
   ctx.fillStyle = 'rgba(' + b.rgb[0] + ',' + b.rgb[1] + ',' + b.rgb[2] + ',' + b.alpha + ')';
   ctx.fill();
-  ctx.lineWidth = 2;
-  ctx.strokeStyle = 'rgba(255,255,255,0.75)';
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = '#ffffff';
   ctx.stroke();
   ctx.beginPath();
   ctx.arc(x, y, r * 0.62, 0, Math.PI * 2);
@@ -792,7 +796,7 @@ function drawDecor(now) {
       y: d.py * S.h,
       r: d.r,
       rgb: PALETTE[d.ci],
-      alpha: 0.4,
+      alpha: 0.96,
       phase: d.phase,
       freq: 0.6,
       amp: reduceMotion ? 0 : 3
@@ -815,7 +819,7 @@ function draw(now) {
     ctx.beginPath();
     if (ring.kind === 'area') {
       ctx.arc(ring.x, ring.y, ring.max, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(170, 214, 216, ' + (a * 0.18) + ')';
+      ctx.fillStyle = 'rgba(180, 230, 255, ' + (a * 0.28) + ')';
       ctx.fill();
       ctx.lineWidth = 3;
       ctx.strokeStyle = 'rgba(255,255,255,' + (a * 0.85) + ')';
@@ -877,7 +881,7 @@ document.getElementById('btnStart').addEventListener('click', function () {
   newRun();
 });
 document.getElementById('btnContinue').addEventListener('click', function () {
-  if (S.mode !== 'fail') return;
+  if (S.mode !== 'fail' || !S.failAdvance) return;
   beginRound(S.round + 1, S.endedWith);
 });
 document.getElementById('btnRetry').addEventListener('click', retryRound);

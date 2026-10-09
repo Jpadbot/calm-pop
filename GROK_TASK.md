@@ -1,35 +1,31 @@
-# GROK_TASK：calm-pop v1 可玩第一版
+# GROK_TASK：calm-pop v1.1 修正（最終定案）
 
 **只准改 /workspace/calm-pop 這個資料夾。不准讀 /workspace/notes/。不准改其他專案。**
 
-請讀本資料夾內的 `TICKET.md`、`PRODUCT.md`、`STYLE.md`、`evidence/DECISIONS.md`，然後實作遊戲。
+請讀 `TICKET.md`（底部 v1.1）、`PRODUCT.md`、`STYLE.md`、`evidence/DECISIONS.md`，修改現有 `index.html` 並同步 `dist/index.html`。
 
-## 交付檔案
-1. `/workspace/calm-pop/index.html` — 單一檔案遊戲（CSS／JS 全部內嵌）
-2. `/workspace/calm-pop/dist/index.html` — 與上面相同的複本
+## A) 數量
+- 刪除 `10+(r-1)*2`。
+- `base(r) = min(10 * r, 100)`。
+- 開場總數：
+  - 若上一場清完（無剩餘）：剛好 `base(r)`。
+  - 若上一場失敗有剩餘：`min(leftover * 2 + base(r), 100)`。
+- 過關清完 → 下一場只用 base，不帶入。
 
-## 必須實作的玩法（依 DECISIONS.md）
-- 手機直向、單手拇指點破抽象幾何泡泡（Canvas 或 DOM 皆可；建議 Canvas 2D）。
-- 開始畫面：繁體中文標題「泡泡點破」、一句說明「點破所有泡泡」、按鈕「開始」。
-- 共 10 回合；每回合恰好 10 秒。
-- HUD：頂部進度條（10 秒）＋「第 N／10 回合」＋剩餘數；中央偏上半透明大數字倒數（10→1）。
-- 第 r 回合新泡泡：`10 + (r-1)*2`。上回合剩餘 ×2 帶入；總數截斷 ≤100。
-- 點一下消除一個；點破有小粒子散開回饋。
-- 泡泡落在中下半可觸區；大小約 44–56px；柔和藍／綠／淡紫／青，半透明。
-- 面對 100 且連續失敗兩次 → 底部出現「範圍消除」（點一下清中下區半徑 90px）；再失敗 →「大範圍消除」（半徑 160px）。點按鈕即清除，勿再要求第二次點擊。
-- 過完 10 回合：完成畫面＋「再玩一次」。時間到仍有剩餘亦可「重試」／「回開始」。
-- 若 10 回合內畫面清到 0 且時間未到，可提前結束該回合進入下一回合（加分感／節奏更好）；若你實作「必須等滿 10 秒」也可以，但優先「清完即進入下一回合」。
+## B) 失敗（最終）
+1. **本場開始總數 < 100**：時間到有剩餘 → 失敗／過渡後 **進入下一回合**（round+1），帶入 leftover×2。按鈕文案用「繼續」或同等（不要寫成重試本關）。不要回到第 1 場。
+2. **本場開始總數 == 100**：時間到未清 → **重試同一回合**（仍生成／維持 100）。按鈕「重試」。不前進、不回第 1 場。
+3. **面對 100 連敗**：連續失敗 ≥2 →「範圍消除」（90px）；再失敗 →「大範圍消除」（160px）。邏輯可沿用現有 assist。
+4. 「再玩一次」「回開始」才 reset 到 round 1。十回合結束才顯示完成畫面。若在 round 10 且未滿／滿 100 失敗，依上面規則：未滿 100 則已無下一場→可當完成或失敗結束；滿 100 則重試 round 10。定案：round 10 失敗（無論是否 100）顯示失敗，可重試 round 10；若你實作「未滿 100 的 round 10 失敗也只重試 round 10」亦可。優先：round < 10 且 startCount < 100 → 前進；startCount == 100 → 重試；round == 10 失敗 → 重試 round 10。
 
-## 技術硬性限制
-- 無外部 CDN、無外部圖片、無網絡請求、無金鑰、無 `/workspace` 或內部路徑字串寫進 HTML。
-- 介面一律繁體中文。
-- `viewport` 允許縮放（不要 `maximum-scale=1` 或 `user-scalable=no`）— 這是一般工具／內容頁規則；本遊戲若確實需要鎖定縮放可保留，但優先不要鎖。
-- 直向為主；橫向也應可開、不爆版。
-- 單一 HTML 檔；可選極短註解。
+## C) 對比
+- 深色單一背景（墨藍／深藍灰）。
+- 泡泡高飽和／高明度填色＋白色描邊；HUD 淺色字。
 
-## 完成後
-- 寫好 `index.html` 後複製到 `dist/index.html`。
-- 不要跑 git push、不要發佈、不要改其他資料夾。
-- 在終端印一行：`CALM_POP_DONE index.html bytes=<size>`
+## 交付
+1. `index.html` + `dist/index.html` 同步
+2. 更新 `evidence/DECISIONS.md`（若需補色值）
+3. 終端印 `CALM_POP_V11_DONE index.html bytes=<size>`
+4. 不要 git commit／push／發佈
 
-開始實作。只准改 /workspace/calm-pop 這個資料夾。
+只准改 /workspace/calm-pop 這個資料夾。

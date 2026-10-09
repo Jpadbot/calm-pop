@@ -61,7 +61,7 @@
   }
   #track {
     height: 8px;
-    margin: 10px 14px 0;
+    margin: 10px 78px 0 14px;
     border-radius: 999px;
     background: rgba(255, 255, 255, 0.2);
     overflow: hidden;
@@ -76,12 +76,28 @@
   #meta {
     display: flex;
     justify-content: space-between;
+    align-items: center;
     gap: 8px;
-    flex-wrap: wrap;
-    padding: 8px 16px 0;
+    flex-wrap: nowrap;
+    padding: 8px 78px 0 16px;
     font-size: 16px;
     font-weight: 600;
     letter-spacing: 0.02em;
+  }
+  #btnPause {
+    pointer-events: auto;
+    position: absolute;
+    z-index: 2;
+    top: calc(8px + env(safe-area-inset-top));
+    right: 10px;
+    min-height: 30px;
+    padding: 4px 10px;
+    font-size: 14px;
+    line-height: 1.1;
+    border: 1px solid rgba(255, 255, 255, 0.62);
+    background: rgba(14, 26, 40, 0.78);
+    color: #f3f7fb;
+    box-shadow: none;
   }
   #countNum {
     position: absolute;
@@ -111,15 +127,20 @@
     border: 1px solid #ffffff;
     background: #f4f8fb;
     color: #0e1a28;
+    margin: 0;
     font: 600 18px/1.2 "PingFang TC", "Noto Sans CJK TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
-    touch-action: manipulation;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    pointer-events: none;
+    cursor: default;
   }
   #areaBtn[data-tier="2"] {
     background: #e6dcff;
     color: #1c1233;
   }
-  #areaBtn:active { transform: translateX(-50%) scale(0.98); }
   #flash {
     position: absolute;
     z-index: 4;
@@ -229,6 +250,7 @@
   <div class="orb o3"></div>
   <canvas id="cv" width="300" height="480" aria-hidden="true"></canvas>
   <header id="hud" hidden>
+    <button type="button" id="btnPause" hidden>暫停</button>
     <div id="track" aria-hidden="true"><div id="fill"></div></div>
     <div id="meta">
       <span id="roundLabel">第 1／10 回合</span>
@@ -236,7 +258,7 @@
     </div>
   </header>
   <div id="countNum" hidden>10</div>
-  <button type="button" id="areaBtn" hidden data-tier="1">範圍消除</button>
+  <p id="areaBtn" hidden data-tier="1" role="status">範圍消除中</p>
   <div id="flash" hidden>清完了</div>
 
   <section id="screenStart" class="panel">
@@ -246,6 +268,17 @@
     </div>
     <div class="actions">
       <button type="button" id="btnStart" class="primary">開始</button>
+    </div>
+  </section>
+
+  <section id="screenPause" class="panel" hidden role="dialog" aria-modal="true" aria-labelledby="pauseTitle">
+    <div class="copy">
+      <p class="headline" id="pauseTitle">暫停</p>
+      <p class="lead" id="pauseLead">倒數已凍結</p>
+    </div>
+    <div class="actions">
+      <button type="button" id="btnResume" class="primary">繼續</button>
+      <button type="button" id="btnCatalog" class="ghost">返回目錄</button>
     </div>
   </section>
 
@@ -344,10 +377,13 @@ var roundLabel = document.getElementById('roundLabel');
 var remainLabel = document.getElementById('remainLabel');
 var countNum = document.getElementById('countNum');
 var areaBtn = document.getElementById('areaBtn');
+var btnPause = document.getElementById('btnPause');
 var flash = document.getElementById('flash');
 var screenStart = document.getElementById('screenStart');
+var screenPause = document.getElementById('screenPause');
 var screenFail = document.getElementById('screenFail');
 var screenDone = document.getElementById('screenDone');
+var pauseLead = document.getElementById('pauseLead');
 var failCount = document.getElementById('failCount');
 var failSub = document.getElementById('failSub');
 var btnContinue = document.getElementById('btnContinue');
@@ -372,12 +408,15 @@ var S = {
   popped: 0,
   endedWith: 0,
   snap: null,
+  pausedAt: 0,
+  pausedFrom: '',
   w: 0,
   h: 0
 };
 
 function showOnly(name) {
   screenStart.hidden = name !== 'start';
+  screenPause.hidden = name !== 'pause';
   screenFail.hidden = name !== 'fail';
   screenDone.hidden = name !== 'done';
 }
@@ -518,6 +557,8 @@ function beginRound(round, prevRemaining) {
   S.round = round;
   S.timeLeft = 10;
   S.deadline = performance.now() + ROUND_MS;
+  S.pausedAt = 0;
+  S.pausedFrom = '';
   S.roundStartCount = plan.total;
   S.endedWith = 0;
   S.bubbles = makeBubbles(plan.total);
@@ -633,8 +674,57 @@ function goStart() {
   S.popped = 0;
   S.endedWith = 0;
   S.snap = null;
+  S.pausedAt = 0;
+  S.pausedFrom = '';
   flash.hidden = true;
   showOnly('start');
+  syncHud();
+}
+
+function pauseGame() {
+  if (S.mode !== 'play' && S.mode !== 'celebrate') return;
+  var now = performance.now();
+  if (S.mode === 'play') {
+    var left = (S.deadline - now) / 1000;
+    if (S.bubbles.length === 0) {
+      resolveSuccess();
+      return;
+    }
+    if (left <= 0) {
+      S.timeLeft = 0;
+      resolveFail();
+      return;
+    }
+    S.timeLeft = left;
+  }
+  S.pausedFrom = S.mode;
+  S.pausedAt = now;
+  S.mode = 'pause';
+  if (S.pausedFrom === 'celebrate') {
+    pauseLead.textContent = '這一回合已清完';
+  } else {
+    var sec = Math.max(1, Math.min(10, Math.ceil(Math.max(0, S.timeLeft))));
+    pauseLead.textContent = '倒數已凍結 · 還有 ' + sec + ' 秒';
+    flash.hidden = true;
+  }
+  showOnly('pause');
+  syncHud();
+  focusId('btnResume');
+}
+
+function resumeGame() {
+  if (S.mode !== 'pause') return;
+  var now = performance.now();
+  var drift = S.pausedAt ? now - S.pausedAt : 0;
+  if (drift < 0) drift = 0;
+  if (S.deadline) S.deadline += drift;
+  if (S.celebrateUntil) S.celebrateUntil += drift;
+  var back = S.pausedFrom === 'celebrate' ? 'celebrate' : 'play';
+  S.pausedAt = 0;
+  S.pausedFrom = '';
+  S.mode = back;
+  if (back === 'celebrate') flash.hidden = false;
+  showOnly('none');
   syncHud();
 }
 
@@ -658,15 +748,13 @@ function retryRound() {
   beginRound(S.snap.round, S.snap.prevRemaining);
 }
 
-function assistShown() {
-  return S.mode === 'play' && S.assist >= 1 && (S.bubbles.length >= MAX_BUBBLES || S.roundStartCount >= MAX_BUBBLES);
-}
-
 function syncHud() {
   var playing = S.mode === 'play' || S.mode === 'celebrate';
-  hud.hidden = !playing;
-  countNum.hidden = !playing;
-  if (!playing) {
+  var live = playing || S.mode === 'pause';
+  hud.hidden = !live;
+  countNum.hidden = !live;
+  btnPause.hidden = !playing;
+  if (!live) {
     areaBtn.hidden = true;
     cv.style.cursor = 'default';
     return;
@@ -677,11 +765,16 @@ function syncHud() {
   remainLabel.textContent = '剩餘 ' + S.bubbles.length;
   var p = Math.max(0, Math.min(1, S.timeLeft / 10));
   fill.style.transform = 'scaleX(' + p + ')';
-  var show = assistShown();
+  if (!playing) {
+    areaBtn.hidden = true;
+    cv.style.cursor = 'default';
+    return;
+  }
+  var show = S.mode === 'play' && S.assist >= 1;
   areaBtn.hidden = !show;
   if (show) {
     var big = S.assist >= 2;
-    var label = big ? '大範圍消除' : '範圍消除';
+    var label = big ? '大範圍消除中' : '範圍消除中';
     if (areaBtn.textContent !== label) areaBtn.textContent = label;
     areaBtn.dataset.tier = big ? '2' : '1';
   }
@@ -693,34 +786,9 @@ function pointFromEvent(e) {
   return { x: e.clientX - rect.left, y: e.clientY - rect.top };
 }
 
-function onDown(e) {
-  if (S.mode !== 'play') return;
-  if (typeof e.button === 'number' && e.button !== 0) return;
-  var p = pointFromEvent(e);
-  var now = performance.now();
-  var i, b, xy, dx, dy, reach;
-  for (i = S.bubbles.length - 1; i >= 0; i--) {
-    b = S.bubbles[i];
-    xy = bubbleXY(b, now);
-    dx = p.x - xy.x;
-    dy = p.y - xy.y;
-    reach = b.r + 6;
-    if (dx * dx + dy * dy <= reach * reach) {
-      burst(xy.x, xy.y, b.rgb, 9);
-      S.bubbles.splice(i, 1);
-      S.popped += 1;
-      syncHud();
-      if (S.bubbles.length === 0) resolveSuccess();
-      return;
-    }
-  }
-}
-
-function areaClear() {
-  if (!assistShown()) return;
+function areaClearAt(cx, cy) {
+  if (S.mode !== 'play' || S.assist < 1) return;
   var radius = assistRadius(S.assist);
-  var cx = S.w * 0.5;
-  var cy = S.h * 0.62;
   var now = performance.now();
   var r2 = radius * radius;
   var i, b, xy, dx, dy;
@@ -738,6 +806,33 @@ function areaClear() {
   S.rings.push({ x: cx, y: cy, max: radius, age: 0, life: 0.42, kind: 'area' });
   syncHud();
   if (S.mode === 'play' && S.bubbles.length === 0) resolveSuccess();
+}
+
+function onDown(e) {
+  if (S.mode !== 'play') return;
+  if (typeof e.button === 'number' && e.button !== 0) return;
+  var p = pointFromEvent(e);
+  if (S.assist >= 1) {
+    areaClearAt(p.x, p.y);
+    return;
+  }
+  var now = performance.now();
+  var i, b, xy, dx, dy, reach;
+  for (i = S.bubbles.length - 1; i >= 0; i--) {
+    b = S.bubbles[i];
+    xy = bubbleXY(b, now);
+    dx = p.x - xy.x;
+    dy = p.y - xy.y;
+    reach = b.r + 6;
+    if (dx * dx + dy * dy <= reach * reach) {
+      burst(xy.x, xy.y, b.rgb, 9);
+      S.bubbles.splice(i, 1);
+      S.popped += 1;
+      syncHud();
+      if (S.bubbles.length === 0) resolveSuccess();
+      return;
+    }
+  }
 }
 
 function stepFx(dt) {
@@ -855,10 +950,13 @@ function frame(now) {
     dt = 0;
   } else if (hiddenAt) {
     var drift = now - hiddenAt;
-    if (S.deadline) S.deadline += drift;
-    if (S.celebrateUntil) S.celebrateUntil += drift;
     hiddenAt = 0;
+    if (S.mode !== 'pause') {
+      if (S.deadline) S.deadline += drift;
+      if (S.celebrateUntil) S.celebrateUntil += drift;
+    }
   }
+  if (S.mode === 'pause') dt = 0;
   if (S.mode === 'play') {
     S.timeLeft = (S.deadline - now) / 1000;
     if (S.bubbles.length === 0) resolveSuccess();
@@ -880,6 +978,18 @@ document.getElementById('btnStart').addEventListener('click', function () {
   if (S.mode !== 'start') return;
   newRun();
 });
+btnPause.addEventListener('click', function (e) {
+  e.stopPropagation();
+  e.preventDefault();
+  pauseGame();
+});
+document.getElementById('btnResume').addEventListener('click', function () {
+  resumeGame();
+});
+document.getElementById('btnCatalog').addEventListener('click', function () {
+  if (S.mode !== 'pause') return;
+  goStart();
+});
 document.getElementById('btnContinue').addEventListener('click', function () {
   if (S.mode !== 'fail' || !S.failAdvance) return;
   beginRound(S.round + 1, S.endedWith);
@@ -890,9 +1000,6 @@ document.getElementById('btnHome').addEventListener('click', goStart);
 document.getElementById('btnHomeDone').addEventListener('click', goStart);
 document.getElementById('btnAgain').addEventListener('click', function () {
   newRun();
-});
-areaBtn.addEventListener('click', function () {
-  areaClear();
 });
 cv.addEventListener('pointerdown', onDown);
 stage.addEventListener('contextmenu', function (e) { e.preventDefault(); });

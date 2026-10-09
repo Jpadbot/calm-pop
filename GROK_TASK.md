@@ -1,31 +1,28 @@
-# GROK_TASK：calm-pop v1.1 修正（最終定案）
+# GROK_TASK：calm-pop v1.2（範圍點擊模式＋暫停）
 
 **只准改 /workspace/calm-pop 這個資料夾。不准讀 /workspace/notes/。不准改其他專案。**
 
-請讀 `TICKET.md`（底部 v1.1）、`PRODUCT.md`、`STYLE.md`、`evidence/DECISIONS.md`，修改現有 `index.html` 並同步 `dist/index.html`。
+請讀 `TICKET.md`（底部 v1.2）、`PRODUCT.md`、`STYLE.md`、`evidence/DECISIONS.md`，修改現有 `index.html` 並同步 `dist/index.html`。**保留 v1.1 的數量／失敗規則不變。**
 
-## A) 數量
-- 刪除 `10+(r-1)*2`。
-- `base(r) = min(10 * r, 100)`。
-- 開場總數：
-  - 若上一場清完（無剩餘）：剛好 `base(r)`。
-  - 若上一場失敗有剩餘：`min(leftover * 2 + base(r), 100)`。
-- 過關清完 → 下一場只用 base，不帶入。
+## 1) 範圍消除改為點擊模式
+- 未解鎖（`assist < 1`）：維持現狀——點一下消除一顆泡泡。
+- 解鎖「範圍消除」（assist≥1）或「大範圍」（assist≥2）後：
+  - **不要**再用底部按鈕單次清一塊就結束。
+  - **每一次**在遊戲區（canvas）上的點擊，都以觸點為中心、依 `assistRadius`（約 90／160 CSS px）清除圓內所有泡泡，並顯示範圍環特效。
+  - 底部按鈕改為不可點的提示標籤（例如「範圍消除中」／「大範圍消除中」），或隱藏按鈕、改在 HUD 顯示「範圍消除中」。
+  - 解鎖條件維持 v1.1（面對 100 連敗）。
 
-## B) 失敗（最終）
-1. **本場開始總數 < 100**：時間到有剩餘 → 失敗／過渡後 **進入下一回合**（round+1），帶入 leftover×2。按鈕文案用「繼續」或同等（不要寫成重試本關）。不要回到第 1 場。
-2. **本場開始總數 == 100**：時間到未清 → **重試同一回合**（仍生成／維持 100）。按鈕「重試」。不前進、不回第 1 場。
-3. **面對 100 連敗**：連續失敗 ≥2 →「範圍消除」（90px）；再失敗 →「大範圍消除」（160px）。邏輯可沿用現有 assist。
-4. 「再玩一次」「回開始」才 reset 到 round 1。十回合結束才顯示完成畫面。若在 round 10 且未滿／滿 100 失敗，依上面規則：未滿 100 則已無下一場→可當完成或失敗結束；滿 100 則重試 round 10。定案：round 10 失敗（無論是否 100）顯示失敗，可重試 round 10；若你實作「未滿 100 的 round 10 失敗也只重試 round 10」亦可。優先：round < 10 且 startCount < 100 → 前進；startCount == 100 → 重試；round == 10 失敗 → 重試 round 10。
-
-## C) 對比
-- 深色單一背景（墨藍／深藍灰）。
-- 泡泡高飽和／高明度填色＋白色描邊；HUD 淺色字。
+## 2) 暫停／返回目錄
+- 對局中（play／celebrate 可選）顯示可點「暫停」——建議右上角小按鈕，或拇指易達但不蓋太多泡泡的位置。
+- 暫停時：倒數／deadline 凍結（類似 visibility hidden 的 drift 處理）；顯示暫停面板，含：
+  - 「繼續」→ 恢復對局並補償暫停時長到 deadline
+  - 「返回目錄」→ 回主選單（等同 goStart／開始畫面）
+- 介面繁體中文。暫停時不要繼續判失敗。
 
 ## 交付
-1. `index.html` + `dist/index.html` 同步
-2. 更新 `evidence/DECISIONS.md`（若需補色值）
-3. 終端印 `CALM_POP_V11_DONE index.html bytes=<size>`
+1. 改好 `index.html`，複製到 `dist/index.html`
+2. 更新 `evidence/DECISIONS.md` 寫明 v1.2：點擊範圍模式、暫停行為；註明底部單次清除已廢止
+3. 終端印 `CALM_POP_V12_DONE index.html bytes=<size>`
 4. 不要 git commit／push／發佈
 
 只准改 /workspace/calm-pop 這個資料夾。

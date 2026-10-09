@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0e1a28">
+<title>泡泡點破</title>
+<link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7">
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #0e1a28;
+    --ink: #f3f7fb;
+    --muted: #d5e2ec;
+    --card: rgba(20, 36, 54, 0.94);
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    height: 100%;
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    justify-content: center;
+    overflow: hidden;
+    font-family: "PingFang TC", "Noto Sans CJK TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+    color: var(--ink);
+    background: var(--bg);
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+  }
+  #stage {
+    position: relative;
+    width: min(480px, 100%);
+    height: 100%;
+    max-height: 100dvh;
+    overflow: hidden;
+    touch-action: manipulation;
+  }
+  .orb { display: none; }
+  #cv {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    touch-action: manipulation;
+    z-index: 1;
+  }
+  #hud {
+    position: absolute;
+    z-index: 2;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding-top: env(safe-area-inset-top);
+    pointer-events: none;
+  }
+  #track {
+    height: 8px;
+    margin: 10px 78px 0 14px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.2);
+    overflow: hidden;
+  }
+  #fill {
+    height: 100%;
+    width: 100%;
+    transform-origin: left center;
+    background: linear-gradient(90deg, #3ddcff, #c49bff);
+    border-radius: inherit;
+  }
+  #meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: nowrap;
+    padding: 8px 78px 0 16px;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+  }
+  #btnPause {
+    pointer-events: auto;
+    position: absolute;
+    z-index: 2;
+    top: calc(8px + env(safe-area-inset-top));
+    right: 10px;
+    min-height: 30px;
+    padding: 4px 10px;
+    font-size: 14px;
+    line-height: 1.1;
+    border: 1px solid rgba(255, 255, 255, 0.62);
+    background: rgba(14, 26, 40, 0.78);
+    color: #f3f7fb;
+    box-shadow: none;
+  }
+  #countNum {
+    position: absolute;
+    z-index: 2;
+    left: 0;
+    right: 0;
+    top: calc(46px + env(safe-area-inset-top));
+    text-align: center;
+    pointer-events: none;
+    font-weight: 200;
+    font-size: clamp(84px, 26vw, 148px);
+    line-height: 0.85;
+    letter-spacing: -0.04em;
+    font-variant-numeric: tabular-nums;
+    color: rgba(255, 255, 255, 0.55);
+  }
+  #areaBtn {
+    position: absolute;
+    z-index: 3;
+    left: 50%;
+    bottom: calc(12px + env(safe-area-inset-bottom));
+    transform: translateX(-50%);
+    width: min(280px, calc(100% - 32px));
+    min-height: 52px;
+    padding: 12px 18px;
+    border-radius: 999px;
+    border: 1px solid #ffffff;
+    background: #f4f8fb;
+    color: #0e1a28;
+    margin: 0;
+    font: 600 18px/1.2 "PingFang TC", "Noto Sans CJK TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    pointer-events: none;
+    cursor: default;
+  }
+  #areaBtn[data-tier="2"] {
+    background: #e6dcff;
+    color: #1c1233;
+  }
+  #flash {
+    position: absolute;
+    z-index: 4;
+    left: 0;
+    right: 0;
+    top: 42%;
+    text-align: center;
+    pointer-events: none;
+    font-size: 28px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.95);
+  }
+  .panel {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 18px;
+    padding:
+      calc(18px + env(safe-area-inset-top))
+      22px
+      calc(22px + env(safe-area-inset-bottom));
+    background: rgba(8, 16, 28, 0.72);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    overflow: auto;
+  }
+  .copy {
+    margin-top: auto;
+    margin-bottom: auto;
+    width: min(340px, 100%);
+    text-align: center;
+    background: var(--card);
+    border-radius: 28px;
+    padding: 28px 22px;
+    box-shadow: 0 10px 36px rgba(0, 0, 0, 0.35);
+  }
+  h1, .headline {
+    margin: 0;
+    font-size: clamp(36px, 10vw, 52px);
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    line-height: 1.2;
+  }
+  .lead, .sub {
+    margin: 12px 0 0;
+    font-size: 18px;
+    line-height: 1.5;
+    color: var(--muted);
+  }
+  .sub { font-size: 16px; }
+  .actions {
+    width: min(320px, 100%);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex: 0 0 auto;
+  }
+  button {
+    appearance: none;
+    -webkit-appearance: none;
+    font: 600 18px/1.2 "PingFang TC", "Noto Sans CJK TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+    min-height: 52px;
+    padding: 12px 18px;
+    border-radius: 999px;
+    touch-action: manipulation;
+    cursor: pointer;
+  }
+  button:focus-visible {
+    outline: 3px solid #9ad7ff;
+    outline-offset: 3px;
+  }
+  .primary {
+    border: 1px solid #ffffff;
+    background: #f4f8fb;
+    color: #0e1a28;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  }
+  .primary:active, .ghost:active { transform: scale(0.98); }
+  .ghost {
+    border: 1px solid rgba(255, 255, 255, 0.62);
+    background: transparent;
+    color: #f3f7fb;
+  }
+  .row { display: flex; gap: 10px; }
+  .row button { flex: 1; }
+  [hidden] { display: none !important; }
+  @media (max-height: 520px) {
+    #countNum { font-size: 64px; top: calc(36px + env(safe-area-inset-top)); }
+    .copy { padding: 16px 16px; }
+    h1, .headline { font-size: 32px; }
+    .lead, .sub { margin-top: 6px; font-size: 16px; }
+    .panel { gap: 10px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .orb { display: none; }
+  }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="orb o1"></div>
+  <div class="orb o2"></div>
+  <div class="orb o3"></div>
+  <canvas id="cv" width="300" height="480" aria-hidden="true"></canvas>
+  <header id="hud" hidden>
+    <button type="button" id="btnPause" hidden>暫停</button>
+    <div id="track" aria-hidden="true"><div id="fill"></div></div>
+    <div id="meta">
+      <span id="roundLabel">第 1／10 回合</span>
+      <span id="remainLabel">剩餘 10</span>
+    </div>
+  </header>
+  <div id="countNum" hidden>10</div>
+  <p id="areaBtn" hidden data-tier="1" role="status">範圍消除中</p>
+  <div id="flash" hidden>清完了</div>
+
+  <section id="screenStart" class="panel">
+    <div class="copy">
+      <h1>泡泡點破</h1>
+      <p class="lead">點破所有泡泡</p>
+    </div>
+    <div class="actions">
+      <button type="button" id="btnStart" class="primary">開始</button>
+    </div>
+  </section>
+
+  <section id="screenPause" class="panel" hidden role="dialog" aria-modal="true" aria-labelledby="pauseTitle">
+    <div class="copy">
+      <p class="headline" id="pauseTitle">暫停</p>
+      <p class="lead" id="pauseLead">倒數已凍結</p>
+    </div>
+    <div class="actions">
+      <button type="button" id="btnResume" class="primary">繼續</button>
+      <button type="button" id="btnCatalog" class="ghost">返回目錄</button>
+    </div>
+  </section>
+
+  <section id="screenFail" class="panel" hidden role="dialog" aria-modal="true" aria-labelledby="failTitle">
+    <div class="copy">
+      <p class="headline" id="failTitle">時間到</p>
+      <p class="lead" id="failCount">還有 0 個泡泡</p>
+      <p class="sub" id="failSub">未消除的會加倍帶入下一回合</p>
+    </div>
+    <div class="actions">
+      <button type="button" id="btnContinue" class="primary">繼續</button>
+      <button type="button" id="btnRetry" class="primary" hidden>重試</button>
+      <button type="button" id="btnHome" class="ghost">回開始</button>
+    </div>
+  </section>
+
+  <section id="screenDone" class="panel" hidden role="dialog" aria-modal="true" aria-labelledby="doneTitle">
+    <div class="copy">
+      <p class="headline" id="doneTitle">完成</p>
+      <p class="lead" id="doneLine">共點破 0 個泡泡</p>
+      <p class="sub" id="doneSub"></p>
+    </div>
+    <div class="actions">
+      <button type="button" id="btnAgain" class="primary">再玩一次</button>
+      <div class="row">
+        <button type="button" id="btnRetryDone" class="ghost">重試</button>
+        <button type="button" id="btnHomeDone" class="ghost">回開始</button>
+      </div>
+    </div>
+  </section>
+</div>
+<script>
+'use strict';
+
+var MAX_BUBBLES = 100;
+var TOTAL_ROUNDS = 10;
+var ROUND_MS = 10000;
+var PALETTE = [
+  [61, 220, 255],
+  [61, 222, 138],
+  [196, 155, 255],
+  [91, 140, 255]
+];
+var DECOR = [
+  { px: 0.16, py: 0.2, r: 26, ci: 0, phase: 0.4 },
+  { px: 0.78, py: 0.16, r: 18, ci: 3, phase: 1.3 },
+  { px: 0.86, py: 0.38, r: 14, ci: 1, phase: 2.2 },
+  { px: 0.1, py: 0.42, r: 16, ci: 2, phase: 2.8 },
+  { px: 0.68, py: 0.3, r: 12, ci: 0, phase: 4.1 }
+];
+
+function baseCount(round) {
+  return Math.min(10 * round, MAX_BUBBLES);
+}
+
+function planRound(round, prevRemaining) {
+  var base = baseCount(round);
+  var leftover = Math.max(0, prevRemaining || 0);
+  var total = leftover > 0 ? Math.min(leftover * 2 + base, MAX_BUBBLES) : base;
+  return { base: base, leftover: leftover, total: total };
+}
+
+function reduceFail(assist, failStreak, roundStartCount) {
+  if (roundStartCount < MAX_BUBBLES) {
+    return { assist: 0, failStreak: 0 };
+  }
+  var streak = failStreak + 1;
+  var next = assist;
+  if (next >= 1) next = 2;
+  else if (streak >= 1) next = 1;
+  return { assist: next, failStreak: streak };
+}
+
+function reduceUnlock(assist, failStreak, roundStartCount) {
+  if (roundStartCount >= MAX_BUBBLES && failStreak >= 2 && assist < 2) return 2;
+  if (roundStartCount >= MAX_BUBBLES && failStreak >= 1 && assist < 1) return 1;
+  return assist;
+}
+
+function assistRadius(assist) {
+  return assist >= 2 ? 160 : 60;
+}
+
+var reduceMotion = false;
+try {
+  reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+} catch (err) {
+  reduceMotion = false;
+}
+
+var stage = document.getElementById('stage');
+var cv = document.getElementById('cv');
+var ctx = cv.getContext('2d');
+var hud = document.getElementById('hud');
+var fill = document.getElementById('fill');
+var roundLabel = document.getElementById('roundLabel');
+var remainLabel = document.getElementById('remainLabel');
+var countNum = document.getElementById('countNum');
+var areaBtn = document.getElementById('areaBtn');
+var btnPause = document.getElementById('btnPause');
+var flash = document.getElementById('flash');
+var screenStart = document.getElementById('screenStart');
+var screenPause = document.getElementById('screenPause');
+var screenFail = document.getElementById('screenFail');
+var screenDone = document.getElementById('screenDone');
+var pauseLead = document.getElementById('pauseLead');
+var failCount = document.getElementById('failCount');
+var failSub = document.getElementById('failSub');
+var btnContinue = document.getElementById('btnContinue');
+var btnRetry = document.getElementById('btnRetry');
+var doneLine = document.getElementById('doneLine');
+var doneSub = document.getElementById('doneSub');
+var btnRetryDone = document.getElementById('btnRetryDone');
+
+var S = {
+  mode: 'start',
+  round: 1,
+  timeLeft: 10,
+  deadline: 0,
+  celebrateUntil: 0,
+  bubbles: [],
+  particles: [],
+  rings: [],
+  failStreak: 0,
+  assist: 0,
+  failAdvance: false,
+  roundStartCount: 0,
+  popped: 0,
+  endedWith: 0,
+  snap: null,
+  pausedAt: 0,
+  pausedFrom: '',
+  w: 0,
+  h: 0
+};
+
+function showOnly(name) {
+  screenStart.hidden = name !== 'start';
+  screenPause.hidden = name !== 'pause';
+  screenFail.hidden = name !== 'fail';
+  screenDone.hidden = name !== 'done';
+}
+
+function spawnBounds(w, h) {
+  var left = w * 0.08;
+  var right = w * 0.92;
+  var top = h * 0.35;
+  var bottom = h * 0.82;
+  if (bottom - top < 100 || right - left < 80) {
+    left = w * 0.06;
+    right = w * 0.94;
+    top = h * 0.24;
+    bottom = Math.max(top + 48, h * 0.8);
+  }
+  return { left: left, right: right, top: top, bottom: bottom };
+}
+
+function resize() {
+  var parentH = stage.parentElement ? stage.parentElement.clientHeight : 0;
+  var vh = window.innerHeight || parentH || 0;
+  if (window.visualViewport && window.visualViewport.height) vh = Math.min(vh, window.visualViewport.height);
+  if (parentH) vh = Math.min(vh, parentH);
+  var nextH = Math.max(1, Math.round(vh)) + 'px';
+  if (stage.style.height !== nextH) stage.style.height = nextH;
+  var rect = stage.getBoundingClientRect();
+  var w = Math.max(1, rect.width);
+  var h = Math.max(1, rect.height);
+  var dpr = Math.min(window.devicePixelRatio || 1, 2);
+  if (S.w > 1 && S.h > 1 && (Math.abs(S.w - w) > 0.5 || Math.abs(S.h - h) > 0.5)) {
+    var sx = w / S.w;
+    var sy = h / S.h;
+    var i;
+    for (i = 0; i < S.bubbles.length; i++) {
+      S.bubbles[i].x *= sx;
+      S.bubbles[i].y *= sy;
+    }
+    for (i = 0; i < S.particles.length; i++) {
+      S.particles[i].x *= sx;
+      S.particles[i].y *= sy;
+    }
+    for (i = 0; i < S.rings.length; i++) {
+      S.rings[i].x *= sx;
+      S.rings[i].y *= sy;
+      S.rings[i].max *= (sx + sy) / 2;
+    }
+  }
+  S.w = w;
+  S.h = h;
+  var tw = Math.round(w * dpr);
+  var th = Math.round(h * dpr);
+  if (cv.width !== tw || cv.height !== th) {
+    cv.width = tw;
+    cv.height = th;
+  }
+  var cssW = w + 'px';
+  var cssH = h + 'px';
+  if (cv.style.width !== cssW) cv.style.width = cssW;
+  if (cv.style.height !== cssH) cv.style.height = cssH;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  clampBubbles();
+}
+
+function focusId(id) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  try { el.focus({ preventScroll: true }); } catch (errFocus) {}
+}
+
+function clampBubbles() {
+  var i, b;
+  for (i = 0; i < S.bubbles.length; i++) {
+    b = S.bubbles[i];
+    b.x = Math.min(S.w - 4, Math.max(4, b.x));
+    b.y = Math.min(S.h - 4, Math.max(4, b.y));
+  }
+}
+
+function makeBubbles(n) {
+  var bounds = spawnBounds(S.w, S.h);
+  var rectW = Math.max(1, bounds.right - bounds.left);
+  var rectH = Math.max(1, bounds.bottom - bounds.top);
+  var cols = Math.max(1, Math.ceil(Math.sqrt(n * (rectW / rectH))));
+  var rows = Math.max(1, Math.ceil(n / cols));
+  var list = [];
+  var i = 0;
+  var row, col, diam, r, cellW, cellH, x, y, rgb, minX, maxX, minY, maxY;
+  for (row = 0; row < rows && i < n; row++) {
+    for (col = 0; col < cols && i < n; col++) {
+      diam = 44 + Math.random() * 12;
+      r = diam / 2;
+      cellW = rectW / cols;
+      cellH = rectH / rows;
+      x = bounds.left + cellW * (col + 0.5) + (Math.random() - 0.5) * cellW * 0.25;
+      y = bounds.top + cellH * (row + 0.5) + (Math.random() - 0.5) * cellH * 0.25;
+      minX = bounds.left + Math.min(r, rectW / 2);
+      maxX = bounds.right - Math.min(r, rectW / 2);
+      minY = bounds.top + Math.min(r, rectH / 2);
+      maxY = bounds.bottom - Math.min(r, rectH / 2);
+      if (maxX < minX) { minX = (bounds.left + bounds.right) / 2; maxX = minX; }
+      if (maxY < minY) { minY = (bounds.top + bounds.bottom) / 2; maxY = minY; }
+      x = Math.min(maxX, Math.max(minX, x));
+      y = Math.min(maxY, Math.max(minY, y));
+      rgb = PALETTE[i % PALETTE.length];
+      list.push({
+        x: x,
+        y: y,
+        r: r,
+        rgb: rgb,
+        alpha: 0.96,
+        phase: Math.random() * Math.PI * 2,
+        freq: 0.85 + Math.random() * 0.7,
+        amp: reduceMotion ? 0 : 2 + Math.random() * 2
+      });
+      i += 1;
+    }
+  }
+  var k, j, tmp;
+  for (k = list.length - 1; k > 0; k--) {
+    j = Math.floor(Math.random() * (k + 1));
+    tmp = list[k];
+    list[k] = list[j];
+    list[j] = tmp;
+  }
+  return list;
+}
+
+function beginRound(round, prevRemaining) {
+  if (S.w < 2 || S.h < 2) resize();
+  var plan = planRound(round, prevRemaining);
+  S.snap = {
+    round: round,
+    prevRemaining: prevRemaining,
+    failStreak: S.failStreak,
+    assist: S.assist,
+    popped: S.popped
+  };
+  S.round = round;
+  S.timeLeft = 10;
+  S.deadline = performance.now() + ROUND_MS;
+  S.pausedAt = 0;
+  S.pausedFrom = '';
+  S.roundStartCount = plan.total;
+  S.endedWith = 0;
+  S.bubbles = makeBubbles(plan.total);
+  S.assist = reduceUnlock(S.assist, S.failStreak, S.roundStartCount);
+  S.mode = 'play';
+  flash.hidden = true;
+  showOnly('none');
+  syncHud();
+}
+
+function bubbleXY(b, now) {
+  var t = now * 0.001;
+  return {
+    x: b.x + Math.sin(t * b.freq + b.phase) * b.amp,
+    y: b.y + Math.cos(t * b.freq * 0.85 + b.phase) * b.amp
+  };
+}
+
+function burst(x, y, rgb, n) {
+  var i, a, sp;
+  for (i = 0; i < n; i++) {
+    a = (Math.PI * 2 * i) / n + Math.random() * 0.45;
+    sp = 70 + Math.random() * 120;
+    S.particles.push({
+      x: x,
+      y: y,
+      vx: Math.cos(a) * sp,
+      vy: Math.sin(a) * sp,
+      age: 0,
+      life: 0.28 + Math.random() * 0.2,
+      rad: 2 + Math.random() * 2.4,
+      rgb: rgb
+    });
+  }
+  S.rings.push({ x: x, y: y, max: 18 + Math.random() * 10, age: 0, life: 0.26, kind: 'pop' });
+  if (S.particles.length > 420) S.particles.splice(0, S.particles.length - 420);
+}
+
+function resolveSuccess() {
+  if (S.mode !== 'play') return;
+  S.failStreak = 0;
+  S.assist = 0;
+  S.endedWith = 0;
+  if (S.round >= TOTAL_ROUNDS) {
+    showDone();
+    return;
+  }
+  S.mode = 'celebrate';
+  S.celebrateUntil = performance.now() + 450;
+  flash.hidden = false;
+  syncHud();
+}
+
+function resolveFail() {
+  if (S.mode !== 'play') return;
+  var remaining = S.bubbles.length;
+  if (remaining <= 0) {
+    resolveSuccess();
+    return;
+  }
+  var next = reduceFail(S.assist, S.failStreak, S.roundStartCount);
+  S.assist = next.assist;
+  S.failStreak = next.failStreak;
+  S.endedWith = remaining;
+  S.timeLeft = 0;
+  S.failAdvance = S.round < TOTAL_ROUNDS && S.roundStartCount < MAX_BUBBLES;
+  showFail();
+}
+
+function showFail() {
+  S.mode = 'fail';
+  failCount.textContent = '還有 ' + S.endedWith + ' 個泡泡';
+  if (S.failAdvance) {
+    failSub.textContent = '未消除的會加倍帶入下一回合';
+    btnContinue.hidden = false;
+    btnRetry.hidden = true;
+  } else {
+    failSub.textContent = '再試一次這一回合';
+    btnContinue.hidden = true;
+    btnRetry.hidden = false;
+  }
+  flash.hidden = true;
+  showOnly('fail');
+  syncHud();
+  focusId(S.failAdvance ? 'btnContinue' : 'btnRetry');
+}
+
+function showDone() {
+  S.mode = 'done';
+  doneLine.textContent = '共點破 ' + S.popped + ' 個泡泡';
+  if (S.endedWith > 0) {
+    doneSub.hidden = false;
+    doneSub.textContent = '還有 ' + S.endedWith + ' 個泡泡';
+    btnRetryDone.hidden = false;
+  } else {
+    doneSub.hidden = false;
+    doneSub.textContent = '十個回合都結束了';
+    btnRetryDone.hidden = true;
+  }
+  flash.hidden = true;
+  showOnly('done');
+  syncHud();
+  focusId('btnAgain');
+}
+
+function goStart() {
+  S.mode = 'start';
+  S.bubbles = [];
+  S.particles = [];
+  S.rings = [];
+  S.failStreak = 0;
+  S.assist = 0;
+  S.popped = 0;
+  S.endedWith = 0;
+  S.snap = null;
+  S.pausedAt = 0;
+  S.pausedFrom = '';
+  flash.hidden = true;
+  showOnly('start');
+  syncHud();
+}
+
+function pauseGame() {
+  if (S.mode !== 'play' && S.mode !== 'celebrate') return;
+  var now = performance.now();
+  if (S.mode === 'play') {
+    var left = (S.deadline - now) / 1000;
+    if (S.bubbles.length === 0) {
+      resolveSuccess();
+      return;
+    }
+    if (left <= 0) {
+      S.timeLeft = 0;
+      resolveFail();
+      return;
+    }
+    S.timeLeft = left;
+  }
+  S.pausedFrom = S.mode;
+  S.pausedAt = now;
+  S.mode = 'pause';
+  if (S.pausedFrom === 'celebrate') {
+    pauseLead.textContent = '這一回合已清完';
+  } else {
+    var sec = Math.max(1, Math.min(10, Math.ceil(Math.max(0, S.timeLeft))));
+    pauseLead.textContent = '倒數已凍結 · 還有 ' + sec + ' 秒';
+    flash.hidden = true;
+  }
+  showOnly('pause');
+  syncHud();
+  focusId('btnResume');
+}
+
+function resumeGame() {
+  if (S.mode !== 'pause') return;
+  var now = performance.now();
+  var drift = S.pausedAt ? now - S.pausedAt : 0;
+  if (drift < 0) drift = 0;
+  if (S.deadline) S.deadline += drift;
+  if (S.celebrateUntil) S.celebrateUntil += drift;
+  var back = S.pausedFrom === 'celebrate' ? 'celebrate' : 'play';
+  S.pausedAt = 0;
+  S.pausedFrom = '';
+  S.mode = back;
+  if (back === 'celebrate') flash.hidden = false;
+  showOnly('none');
+  syncHud();
+}
+
+function newRun() {
+  S.failStreak = 0;
+  S.assist = 0;
+  S.popped = 0;
+  S.particles = [];
+  S.rings = [];
+  beginRound(1, 0);
+}
+
+function retryRound() {
+  if (!S.snap) {
+    newRun();
+    return;
+  }
+  if (S.mode !== 'fail' && S.mode !== 'done') return;
+  if (S.mode === 'fail' && S.failAdvance) return;
+  S.popped = S.snap.popped;
+  beginRound(S.snap.round, S.snap.prevRemaining);
+}
+
+function syncHud() {
+  var playing = S.mode === 'play' || S.mode === 'celebrate';
+  var live = playing || S.mode === 'pause';
+  hud.hidden = !live;
+  countNum.hidden = !live;
+  btnPause.hidden = !playing;
+  if (!live) {
+    areaBtn.hidden = true;
+    cv.style.cursor = 'default';
+    return;
+  }
+  var sec = Math.max(1, Math.min(10, Math.ceil(Math.max(0, S.timeLeft))));
+  if (countNum.textContent !== String(sec)) countNum.textContent = String(sec);
+  roundLabel.textContent = '第 ' + S.round + '／10 回合';
+  remainLabel.textContent = '剩餘 ' + S.bubbles.length;
+  var p = Math.max(0, Math.min(1, S.timeLeft / 10));
+  fill.style.transform = 'scaleX(' + p + ')';
+  if (!playing) {
+    areaBtn.hidden = true;
+    cv.style.cursor = 'default';
+    return;
+  }
+  var show = S.mode === 'play' && S.assist >= 1;
+  areaBtn.hidden = !show;
+  if (show) {
+    var big = S.assist >= 2;
+    var label = big ? '大範圍消除中' : '範圍消除中';
+    if (areaBtn.textContent !== label) areaBtn.textContent = label;
+    areaBtn.dataset.tier = big ? '2' : '1';
+  }
+  cv.style.cursor = 'pointer';
+}
+
+function pointFromEvent(e) {
+  var rect = cv.getBoundingClientRect();
+  return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+}
+
+function areaClearAt(cx, cy) {
+  if (S.mode !== 'play' || S.assist < 1) return;
+  var radius = assistRadius(S.assist);
+  var now = performance.now();
+  var r2 = radius * radius;
+  var i, b, xy, dx, dy;
+  for (i = S.bubbles.length - 1; i >= 0; i--) {
+    b = S.bubbles[i];
+    xy = bubbleXY(b, now);
+    dx = xy.x - cx;
+    dy = xy.y - cy;
+    if (dx * dx + dy * dy <= r2) {
+      burst(xy.x, xy.y, b.rgb, 5);
+      S.bubbles.splice(i, 1);
+      S.popped += 1;
+    }
+  }
+  S.rings.push({ x: cx, y: cy, max: radius, age: 0, life: 0.42, kind: 'area' });
+  syncHud();
+  if (S.mode === 'play' && S.bubbles.length === 0) resolveSuccess();
+}
+
+function onDown(e) {
+  if (S.mode !== 'play') return;
+  if (typeof e.button === 'number' && e.button !== 0) return;
+  var p = pointFromEvent(e);
+  if (S.assist >= 1) {
+    areaClearAt(p.x, p.y);
+    return;
+  }
+  var now = performance.now();
+  var i, b, xy, dx, dy, reach;
+  for (i = S.bubbles.length - 1; i >= 0; i--) {
+    b = S.bubbles[i];
+    xy = bubbleXY(b, now);
+    dx = p.x - xy.x;
+    dy = p.y - xy.y;
+    reach = b.r + 6;
+    if (dx * dx + dy * dy <= reach * reach) {
+      burst(xy.x, xy.y, b.rgb, 9);
+      S.bubbles.splice(i, 1);
+      S.popped += 1;
+      syncHud();
+      if (S.bubbles.length === 0) resolveSuccess();
+      return;
+    }
+  }
+}
+
+function stepFx(dt) {
+  var damp = Math.exp(-2.6 * dt);
+  var i, p;
+  for (i = 0; i < S.particles.length; i++) {
+    p = S.particles[i];
+    p.age += dt;
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.vx *= damp;
+    p.vy *= damp;
+  }
+  var nextP = [];
+  for (i = 0; i < S.particles.length; i++) {
+    if (S.particles[i].age < S.particles[i].life) nextP.push(S.particles[i]);
+  }
+  S.particles = nextP;
+  var nextR = [];
+  for (i = 0; i < S.rings.length; i++) {
+    S.rings[i].age += dt;
+    if (S.rings[i].age < S.rings[i].life) nextR.push(S.rings[i]);
+  }
+  S.rings = nextR;
+}
+
+function drawBubble(b, now) {
+  var xy = bubbleXY(b, now);
+  var x = xy.x;
+  var y = xy.y;
+  var r = b.r;
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(' + b.rgb[0] + ',' + b.rgb[1] + ',' + b.rgb[2] + ',' + b.alpha + ')';
+  ctx.fill();
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = '#ffffff';
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(x, y, r * 0.62, 0, Math.PI * 2);
+  ctx.lineWidth = 1.5;
+  ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.ellipse(x - r * 0.28, y - r * 0.34, r * 0.28, r * 0.18, -0.5, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(255,255,255,0.55)';
+  ctx.fill();
+}
+
+function drawDecor(now) {
+  var i, d, b;
+  for (i = 0; i < DECOR.length; i++) {
+    d = DECOR[i];
+    b = {
+      x: d.px * S.w,
+      y: d.py * S.h,
+      r: d.r,
+      rgb: PALETTE[d.ci],
+      alpha: 0.96,
+      phase: d.phase,
+      freq: 0.6,
+      amp: reduceMotion ? 0 : 3
+    };
+    drawBubble(b, now);
+  }
+}
+
+function draw(now) {
+  ctx.clearRect(0, 0, S.w, S.h);
+  var i, p, ring, t, a, rad;
+  if (S.mode === 'start' || (S.bubbles.length === 0 && S.mode !== 'play' && S.mode !== 'celebrate')) {
+    drawDecor(now);
+  }
+  for (i = 0; i < S.bubbles.length; i++) drawBubble(S.bubbles[i], now);
+  for (i = 0; i < S.rings.length; i++) {
+    ring = S.rings[i];
+    t = ring.age / ring.life;
+    a = 1 - t;
+    ctx.beginPath();
+    if (ring.kind === 'area') {
+      ctx.arc(ring.x, ring.y, ring.max, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(180, 230, 255, ' + (a * 0.28) + ')';
+      ctx.fill();
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = 'rgba(255,255,255,' + (a * 0.85) + ')';
+      ctx.stroke();
+    } else {
+      rad = ring.max * (0.35 + 0.75 * t);
+      ctx.arc(ring.x, ring.y, rad, 0, Math.PI * 2);
+      ctx.lineWidth = 2.5 * a;
+      ctx.strokeStyle = 'rgba(255,255,255,' + (a * 0.8) + ')';
+      ctx.stroke();
+    }
+  }
+  for (i = 0; i < S.particles.length; i++) {
+    p = S.particles[i];
+    a = 1 - p.age / p.life;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.rad, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(' + p.rgb[0] + ',' + p.rgb[1] + ',' + p.rgb[2] + ',' + a + ')';
+    ctx.fill();
+  }
+}
+
+var lastTick = 0;
+var hiddenAt = 0;
+
+function frame(now) {
+  var raw = lastTick ? (now - lastTick) / 1000 : 0;
+  lastTick = now;
+  if (raw < 0) raw = 0;
+  var dt = raw > 0.05 ? 0.05 : raw;
+  if (document.hidden) {
+    if (!hiddenAt) hiddenAt = now;
+    dt = 0;
+  } else if (hiddenAt) {
+    var drift = now - hiddenAt;
+    hiddenAt = 0;
+    if (S.mode !== 'pause') {
+      if (S.deadline) S.deadline += drift;
+      if (S.celebrateUntil) S.celebrateUntil += drift;
+    }
+  }
+  if (S.mode === 'pause') dt = 0;
+  if (S.mode === 'play') {
+    S.timeLeft = (S.deadline - now) / 1000;
+    if (S.bubbles.length === 0) resolveSuccess();
+    else if (S.timeLeft <= 0) {
+      S.timeLeft = 0;
+      resolveFail();
+    }
+  } else if (S.mode === 'celebrate' && now >= S.celebrateUntil) {
+    flash.hidden = true;
+    beginRound(S.round + 1, 0);
+  }
+  stepFx(dt);
+  draw(now);
+  if (S.mode === 'play' || S.mode === 'celebrate') syncHud();
+  requestAnimationFrame(frame);
+}
+
+document.getElementById('btnStart').addEventListener('click', function () {
+  if (S.mode !== 'start') return;
+  newRun();
+});
+btnPause.addEventListener('click', function (e) {
+  e.stopPropagation();
+  e.preventDefault();
+  pauseGame();
+});
+document.getElementById('btnResume').addEventListener('click', function () {
+  resumeGame();
+});
+document.getElementById('btnCatalog').addEventListener('click', function () {
+  if (S.mode !== 'pause') return;
+  goStart();
+});
+document.getElementById('btnContinue').addEventListener('click', function () {
+  if (S.mode !== 'fail' || !S.failAdvance) return;
+  beginRound(S.round + 1, S.endedWith);
+});
+document.getElementById('btnRetry').addEventListener('click', retryRound);
+document.getElementById('btnRetryDone').addEventListener('click', retryRound);
+document.getElementById('btnHome').addEventListener('click', goStart);
+document.getElementById('btnHomeDone').addEventListener('click', goStart);
+document.getElementById('btnAgain').addEventListener('click', function () {
+  newRun();
+});
+cv.addEventListener('pointerdown', onDown);
+stage.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+window.addEventListener('resize', resize);
+if (window.visualViewport) window.visualViewport.addEventListener('resize', resize);
+if (window.ResizeObserver) new ResizeObserver(resize).observe(stage);
+document.addEventListener('visibilitychange', function () {
+  if (document.hidden) hiddenAt = performance.now();
+});
+
+resize();
+showOnly('start');
+syncHud();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
